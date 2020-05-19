@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hx.fresh.mapper.IAdminInfoMapper">
+	<select id="login" resultType="AdminInfo" parameterType="AdminInfo">
+		SELECT aid,aname FROM admininfo WHERE aname=#{aname} AND pwd=md5(#{pwd})
+	</select>
+
+	<select id="findAll" resultType="AdminInfo">
+		SELECT aid,aname,tel from admininfo
+	</select>
+
+	<insert id="add" parameterType="AdminInfo">
+		INSERT INTO admininfo VALUES(0,#{aname},md5(#{pwd}),#{tel})
+	</insert>
+	
+	<update id="updatePwd" parameterType="int">
+		UPDATE admininfo SET pwd=md5(RIGHT(tel,6)) WHERE aid=#{_parameter}
+	</update>
+	
+	<delete id="delByAid">
+		DELETE FROM admininfo WHERE aid=#{_parameter}
+	</delete>
+</mapper>

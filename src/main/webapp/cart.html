@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>天天生鲜-购物车</title>
+<link rel="shortcut icon" href="images/copylogo.png">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/cart.css">
+<script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+<script src="js/check.js"></script>
+<!-- layui -->
+<link rel="stylesheet" href="layui/css/layui.css"  media="all">
+<script src="layui/layui.js" charset="utf-8"></script>
+<script src="js/cart.js"></script>
+</head>
+
+<body>
+	<!-- 头部 -->
+	<div class="header_con">
+		<div class="header">
+			<div class="welcome fl">欢迎来到天天生鲜</div>
+			<div class="fr">
+				<div id="loginInfo" class="login_info fl">
+					欢迎：<em>未登录</em> <span> | </span> <a href="javascript:loginOut()">退出登录</a>
+				</div>
+				<div id="loginBtn" class="login_btn fl">
+					<a href="login.html">登录</a> <span> | </span> <a
+						href="register.html">注册</a>
+				</div>
+				<div class="user_link fl">
+					<span> | </span> <a href="user.html">用户中心</a> <span> | </span> <a
+						href="cart.html">我的购物车</a> <span> | </span> <a href="order.html">我的订单</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 搜索框-->
+	<div class="search_bar clearfix">
+		<a href="index.html" class="logo fl"><img src="images/logo.png"></a>
+		<div class="search_con fl">
+			<form>
+				<input type="text" class="input_text fl" id="keyWord" placeholder="搜索商品"> 
+				<input type="button" onclick="doSearch();" class="input_btn fr" value="搜索">
+			</form>
+		</div>
+		<div class="guest_cart fr">
+			<a href="cart.html" class="cart_name fl">我的购物车</a>
+			<div class="goods_count fl" id="cart_count">0</div>
+		</div>
+	</div>
+
+	<!-- 购物车 -->
+	<div class="cart_con">
+		<h2 class="total_count">
+			全部商品<em>1</em>件
+		</h2>
+		<div class="cart_list_th clearfix">
+			<ul>
+				<li class="col01">商品名称</li>
+				<li	 class="col02">商品单位</li>
+				<li class="col03">商品价格(元)</li>
+				<li class="col04">数量</li>
+				<li class="col05">小计</li>
+				<li class="col06">操作</li>
+			</ul>
+		</div>
+		<div class="cart_list_td clearfix" id="goodsListView">
+			<!-- 商品列表视图 -->
+		</div>
+		<div class="setElements">
+			<ul>
+				<li class="col01"><input type="checkbox" id="all"></li>
+				<li class="col02"><label for="all">全选</label></li>
+				<li class="col03">合计(不含运费)：<span>￥</span><em id="totalPrices">0</em>
+				<br>共计<b id="totalNumbers">0</b>件商品
+				</li>
+				<li class="col04"><a href="javascript:toPay()">去结算</a></li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- 版权所有 -->
+	<div class="footer">
+		<div class="foot_link">
+			<a href="#">关于我们</a> <span> | </span> <a href="#">联系我么</a> <span>
+				| </span> <a href="#">招聘人才</a> <span> | </span> <a href="#">友情链接</a>
+		</div>
+		<p>CcpyRight &copy; 2019 衡阳市源辰信息科技有限公司 All Rights Reserverd</p>
+		<p>电话：0734-8355998 湘ICP备16015987号</p>
+	</div>
+</body>
+
+<!-- 商品列表模板 -->
+<script id="goodsModel" type="text/html">
+{{#  layui.each(d.list, function(index, item){ }}
+	<ul id="goodsInfo_{{item.gno}}">
+		<li class="col01"><input onclick="checks()" data-gno="{{item.gno}}" type="checkbox"></li>
+		<li class="col02">
+			{{#   var pic = item.pics.split("|")[0]; var fn = function(){ return pic } }}
+			<img id="pic_{{item.gno}}" src="{{ fn() }}">
+		</li>
+		<li class="col03""><p id="gname_{{item.gno}}">{{item.gname}}</p>
+		<em>{{item.price}}元 / <span id="weight_{{item.gno}}">{{item.weight}}</span></em></li>
+		<li class="col04">{{item.unit}}</li>
+		<li id="price_{{item.gno}}" class="col05">{{item.price}}</li>
+		<li class="col06">
+			<div class="num_add">
+				<a href="javascript:countNum({{item.gno}},-1)" class="minus fl">-</a>
+				<input type="text" onkeydown="numInpKeyDown(this)" onblur="updateNum({{item.gno}},this.value)" 
+					 id="num_{{item.gno}}" value="{{item.num}}" class="num_show fl"> 
+				<a href="javascript:countNum({{item.gno}},1)" class="add fl">+</a>
+			</div>
+		</li>
+		<li id="subtotal_{{item.gno}}" class="col07">{{ (item.price*item.num) }}</li>
+		<li class="col08"><a href="javascript:;" onclick="delGoods({{item.gno}})">删除</a></li>
+	</ul>
+{{#  }); }}
+{{#  if(d.list.length === 0){ }}
+	暂无数据，快去加购吧！<a href="index.html">立刻浏览商品</a>
+{{#  } }} 
+</script>
+
+<script type="text/javascript">
+//全选和全不选
+$("#all").click(function(){
+	//获取全选是否被选中
+	//prop 获取标签的固有属性  attr 自动义的属性
+	var flag = $(this).prop("checked");
+	//判断    
+	$(".cart_list_td ul .col01 input").prop("checked",flag);
+	checks();	//调用checks方法，使其重新计算价格与选中的商品
+});
+</script>
+</html>

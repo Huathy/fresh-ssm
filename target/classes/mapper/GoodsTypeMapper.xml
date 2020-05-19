@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hx.fresh.mapper.IGoodsTypeMapper">
+	<update id="modify" parameterType="GoodsType">
+		UPDATE goodstype SET tname=#{tname},status=#{status} 
+		<if test="pic != null">
+			,pic=#{pic}
+		</if>
+		WHERE tno=#{tno}
+	</update>
+	
+	<select id="getTidName" resultType="GoodsType">
+		SELECT tno,tname FROM goodstype WHERE status=1
+	</select>
+	
+	<insert id="add" parameterType="String">
+		INSERT INTO goodstype VALUES(0,#{tname},#{path},1)
+	</insert>
+	
+	<update id="delByTno" parameterType="int">
+		DELETE FROM goodstype WHERE tno=#{_parameter}
+	</update>
+	
+	<select id="countAll" resultType="int">
+		SELECT COUNT(tno) FROM goodstype
+	</select>
+
+	<select id="findAllByPage" resultType="GoodsType" parameterType="Integer">
+		SELECT tno,tname,pic,status FROM goodstype ORDER BY tno LIMIT #{page},#{pageSize}
+	</select>
+	
+	<select id="getAll" resultType="GoodsType">
+		SELECT tno,tname,pic FROM goodstype WHERE status=1 ORDER BY tno
+	</select>
+</mapper>

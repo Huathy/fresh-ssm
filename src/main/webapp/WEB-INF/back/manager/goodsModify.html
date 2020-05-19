@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script type="text/javascript" src="../js/showpic.js"></script>
+<script type="text/javascript" src="../js/ajaxfileupload.js"></script>
+<script src="../ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="../js/jquery.base64.js"></script>
+<!-- layer -->
+<script src="../../layer/layer.js" charset="utf-8"></script>
+
+<style type="text/css">
+.imgDiv{
+	position: relative;
+	float:left;
+	border:2px solid #95B8E7;
+	margin-right:10px;
+	margin-bottom:10px'
+}
+.imgDiv img{
+	width:100px; 
+	height:100px;
+	z-index:1; 
+}
+.imgDiv a{
+	position: absolute;
+	margin-left:-18px;
+	height : 16px;
+	width:16px;
+	z-index: 10;
+	color: black;
+	border: 1px solid #999;
+	border-radius: 50%;
+}
+</style>
+</head>
+<body>
+<div id="forms" class="mt10">
+	<form action="" class="jqtransform" id="addGoodsForm">
+		<table class="form_table pt15 pb15" width="100%" border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td class="td_right">商品类型：</td>
+				<td>
+					<select class="select" name="tid" id="goodsType">
+					</select>
+				</td>
+				<td class="td_right">商品名称：</td>
+				<td>
+					<input type="text" id="gname" name="title" class="input-text lh30" size="40" required placeholder="请输入商品名称">
+				</td>
+				<td class="td_right">商品单价：</td>
+				<td>
+					<input type="number" id="price" name="price" class="input-text lh30" size="40"  min="0" required placeholder="单价"/>
+				</td>
+			</tr>
+			<tr>
+				<td class="td_right">商品库存：</td>
+				<td>
+					<input type="number" id="balance" name="balance" class="input-text lh30" size="40" min="1" required placeholder="库存"/>
+				</td>
+				<td class="td_right">商品单位：</td>
+				<td>
+					<input type="text" id="unit" name="unit" list="unitList" class="input-text lh30" required size="40" placeholder="请选择或输入单位"/>
+					<datalist id="unitList">
+						<option>个</option>
+						<option>斤</option>
+						<option>公斤</option>
+						<option>两</option>
+					</datalist>
+				</td>
+				<td class="td_right">保质期：</td>
+				<td>
+					<input type="text" id="qperied" name="qperied" class="input-text lh30" size="40" required placeholder="保质期"/>
+				</td>
+			</tr>
+			<tr>
+				<td class="td_right">商品净重：</td>
+				<td>
+					<input type="text" id="weight" name="weight" class="input-text lh30" size="40"  min="0" required placeholder="净重" >
+				</td>
+				<td class="td_right">商品图片：</td>
+				<td>
+					<input type="file" id="pic" name="pic" class="input-text lh30" size="40" multiple="multiple" required onchange="setImagePreviews(this,'showPics')">
+				</td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+				<td colspan="5" align="center">
+					<div id="showPics">
+					
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="td_right">商品简介：</td>
+				<td colspan="5">
+					 <textarea name="intro" id="intro" rows="3" cols="100" required maxlength="130" placeholder="请输入商品简介"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td class="td_right">商品描述：</td>
+				<td colspan="5">
+					 <textarea name="editor1" id="editor1" rows="10" cols="80" required placeholder="请输入商品描述信息"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="4" align="center">
+					<input type="button" name="button" class="btn btn82 btn_save2" onclick="modifyGoodsInfo()" value="立即修改">
+					<input type="reset" name="button" class="btn btn82 btn_res" value="重置表单">
+				</td>
+			</tr>
+		</table>
+	</form>
+</div>
+<script type="text/javascript">
+var parent_mdfObj;	//定义修改的对象，供后面获取
+var gno;	//定义一个商品编号，以供后面获取
+var phos = [];	//定义临时的phos	保存已有的图片
+$(function(){
+	var types = eval(parent.typesTemp);		//从父页面获取，以减少每次请求，并解决请求在渲染之后，需要发同步请求的问题
+	
+	var str = '<option id="0" value="-1">请选择商品类型</option>';
+	$.each(types,function(index,item){
+		str += '<option id="'+item.tno+'" value="'+item.tno+'">'+item.tname+'</option>';
+	});
+	$("#goodsType").html(str);
+	
+	parent_mdfObj = eval(parent.mdfObjtemp);
+	var data = parent_mdfObj.data;
+	gno = data.gno;
+	$("#goodsType").val(data.tno);
+	document.getElementById("goodsType").value = data.tno;
+	$("#goodsType").find("option[value='"+data.tno+"']").prop("selected", true);
+//	$("#goodsType").find("option[value="+data.tno+"]").prop("selected", true);
+//	$("#goodsType").find("option[value="+data.tno+"]").attr("selected", true);
+//	$("#goodsType").find("option[value="+data.tno+"]").attr("selected", "selected");
+	$("#gname").val(data.gname);
+	$("#price").val(data.price);
+	$("#balance").val(data.balance);
+	$("#unit").val(data.unit);
+	$("#qperied").val(data.qperied);
+	$("#weight").val(data.weight);
+	$("#intro").val(data.intro);
+	CKEDITOR.instances.editor1.setData(data.descr);	//获取描述信息
+	
+	phos = data.pics.split('|');
+	var pics = '';
+	$.each(phos,function(index,item){
+		pics += '<div id="imgDiv_'+index+'" class="imgDiv"><img id="showPics_img'+index+'" src="../../'+item+'"/>';
+		pics += '<a href="javascript:delImg('+index+')" class="imgDel">&times;</a></div>';
+	});
+	$("#showPics").html(pics);
+});
+
+//渲染富文本编辑器
+CKEDITOR.replace( 'editor1' );
+
+//*****执行商品添加方法***********************************************************************************************/
+function modifyGoodsInfo() {
+	var tno = $.trim($("#goodsType").val());	
+	var gname = $.trim($("#gname").val());		
+	var price = $.trim($("#price").val());		
+	var balance = $.trim($("#balance").val());	
+	var unit = $.trim($("#unit").val());		
+	var qperied = $.trim($("#qperied").val());	
+	var weight = $.trim($("#weight").val());	
+	var intro = $.trim($("#intro").val());		
+	var descr = CKEDITOR.instances.editor1.getData();	//获取描述信息
+	
+	//**判空操作及提示****/
+	var params = [tno,gname,price,balance,unit,qperied,weight,intro,descr];
+	var msg = ['商品类型','商品名称','商品单价','商品库存','商品单位','保质期','商品净重','商品简介','商品描述'];
+	for(var i=0;i<params.length;i++){
+		if(params[i]==null || params[i]==''){
+			layer.msg('请完善 '+msg[i]+' 信息！',{icon:2});
+			return;
+		}
+	}
+	
+	if(tno <= 0){
+		layer.msg("请选择商品类型");
+		return;
+	}
+	
+	var photos = phos.filter(function (pho) {
+		return pho && pho.trim();		//图片数组去空操作
+	});
+	photos = photos.join("|");	//图片数组转为以|符号分割的字符串
+
+	$.ajaxFileUpload({
+		url:'../../goods/modifyGoods',
+		secureuri: false,
+		fileElementId:"pic",
+		dataType:"json",
+		data:{gno:gno , tno:tno,pics:photos, gname:gname,price:price,balance:balance,unit:unit,qperied:qperied,weight:weight,intro:intro,descr:descr},
+		success:function(data, stuts) {
+			code = parseInt($.trim(data.code));
+			if (code > 0) {
+				$("#addGoodsForm")[0].reset();
+				$("#showPics").html("");
+				CKEDITOR.instances.editor1.setData("");
+				var pics = data.msg;
+				parent.layer.closeAll();	//调用父页面关闭所有弹窗方法
+				parent.layer.msg("商品信息修改成功...");	//调用父页面提示方法
+				parent.changeData({gno:gno,tno:tno,gname:gname,price:price,balance:balance,unit:unit,qperied:qperied,weight:weight,intro:intro,descr:descr,pics:pics,phos:photos});
+			} else if (code == -1) {
+				layer.msg("请完善商品信息！");
+			}else {
+				layer.msg("商品信息修改失败... \n msg: " + data.msg);
+			}
+		},
+		error:function(data, status, e) {
+			alert("操作失败，请稍后重试...\n" + e);
+		}
+	});
+}
+
+function delImg(i){
+	$("#imgDiv_"+i).remove();
+	phos[i] = "";	//置空
+}
+</script>
+</body>
+</html>

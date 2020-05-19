@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<!-- layer -->
+<link rel="stylesheet" href="../../layui/css/layui.css" media="all">
+<script src="../../layui/layui.js" charset="utf-8"></script>
+</head>
+<body>
+
+<table id="orderTable"></table>
+
+</body>
+
+<script type="text/javascript">
+var layer;
+layui.use('layer',function(){
+	layer = layui.layer;
+});
+var table;
+layui.use('table', function(){
+	table = layui.table;
+	table.render({
+		elem: '#orderTable'
+		,url:'../../order/findAllByPage'
+		,cols: [[
+			{field:'ono', width:'6%', title: '单号', sort: true}
+			,{field:'odate', width:'14%', title: '订单日期', sort: true}
+			,{field:'price', width:'6%', title: '价格', sort: true,templet:function(res){
+				var price = 0;
+				$.each(res.orderItem,function(index,item){
+					price += parseFloat(item.price);
+				});
+				return price;
+			}}
+			,{field:'addr', width:'18%', title: '配送地址', templet:function(res){
+				return res.addrInfo.addr;
+			}}
+			,{field:'orderItem', width:'48%', title: '商品详情',templet:function(res){
+				var info = '';
+				$.each(res.orderItem,function(index,item){
+					info += item.goodsInfo.gname + '&times;' + item.nums + "&emsp;";
+				});
+				return info;
+			}}
+			,{field:'status', width:'10%', title: '状态', sort: true , templet:function(res){
+				switch(res.status){
+				case 1:return '<a class="layui-btn layui-btn-primary layui-btn-sm">等待用户支付</a>';
+				case 2:return '<a class="layui-btn layui-btn-danger layui-btn-sm" onclick="ship('+res.ono+',this)">点击确认发货</a>';
+				case 3:return '<a class="layui-btn layui-btn-sm">已发货待签收</a>';
+				case 4:return '<a class="layui-btn layui-btn-normal layui-btn-sm">用户已签收</a>';
+				}
+				return res.status;
+			}}
+		]]
+		,page: true
+	});
+});
+
+function ship(ono,obj){
+	$.post("../../order/mdfyStateByOno",{ono:ono,op:'ship'},function(data){
+		data = parseInt($.trim(data));
+		data>0 ? $(obj).html("已发货待签收").attr("class","layui-btn layui-btn-sm") : layer.msg("操作请稍后重试",{icon:5});
+	},"json");
+}
+</script>
+</html>

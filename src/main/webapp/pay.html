@@ -1,0 +1,328 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>天天生鲜-支付管理</title>
+<link rel="shortcut icon" href="images/copylogo.png">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/pay.css">
+<!--  注意引入顺序 -->
+<script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="js/addr.js"></script>
+<script type="text/javascript" src="js/check.js"></script>
+<script type="text/javascript" src="js/areas.js"></script>
+<script type="text/javascript" src="js/paramsUtil.js"></script>
+<!-- layui -->
+<link rel="stylesheet" href="layui/css/layui.css"  media="all">
+<script src="layui/layui.js" charset="utf-8"></script>
+</head>
+
+<body>
+	<!-- 头部  -->
+	<div class="header_con">
+		<div class="header">
+			<div class="welcome fl">欢迎来到天天生鲜</div>
+			<div class="fr">
+				<div id="loginInfo" class="login_info fl">
+					欢迎：<em>未登录</em> <span> | </span> <a href="javascript:loginOut()">退出登录</a>
+				</div>
+				<div id="loginBtn" class="login_btn fl">
+					<a href="login.html">登录</a> <span> | </span> <a
+						href="register.html">注册</a>
+				</div>
+				<div class="user_link fl">
+					<span> | </span> <a href="user.html">用户中心</a> <span> | </span> <a
+						href="cart.html">我的购物车</a> <span> | </span> <a href="order.html">我的订单</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 搜素框 -->
+	<div class="search_bar clearfix">
+		<a href="index.html" class="logo fl"><img src="images/logo.png"></a>
+		<div class="search_con fl">
+			<input type="text" class="input_text fl" id="keyWord" placeholder="搜索商品"> 
+			<input type="button" onclick="doSearch();" class="input_btn fr" value="搜索">
+		</div>
+	</div>
+
+	<!-- 收货地址 -->
+	<h3 class="common_title">确认收货地址</h3>
+
+	<div class="common_list_con clearfix">
+		<input type="hidden" id="receive_addr" />
+		<div class="addr_btns">
+			<a href="javascript:showAddrDiv();showProvince()" class="layui-btn layui-btn-primary layui-btn layui-btn-sm">使用新地址</a>
+			<a href="user.html#addrManage;" class="layui-btn layui-btn-sm">管理收货地址</a>
+		</div>
+		<dl id="addr_list" style="margin-top: 2px;">
+			<dt>寄送到：</dt>
+		</dl>
+	</div>
+
+	<div id="addr_div">
+		<img src="images/close.png" title="关闭" onclick="hiddenDiv();" />
+		<form id="myform">
+			<ul>
+				<li><label for="addr_name">收货人：</label> <input id="addr_name"
+					name="name" type="text" placeholder="请输入收货人姓名" /></li>
+				<li><label for="addr_tel">联系方式：</label> <input id="addr_tel"
+					name="tel" type="tel" placeholder="请输入收货人联系方式" /></li>
+				<li><label for="addr_name">收货地址：</label> 
+				<select id="province" onchange="showCity()">
+					<option value="">--请选择省份--</option>
+				</select>
+				<select id="city" onchange="showArea()">
+					<option value="">--请选择城市--</option>
+				</select> 
+				<select id="area">
+					<option value="">--请选择地区--</option>
+				</select></li>
+				<li><label for="addr_addr">详细地址：</label> <input id="addr_addr"
+					name="addr" style="width: 480px;" type="text"
+					placeholder="请输入详细地址（街道、门牌等）" /></li>
+				<li class="addr_btn"><a href="javascript:addAddr()">添加收货地址</a>
+				</li>
+			</ul>
+		</form>
+	</div>
+
+	<!-- 商品列表 -->
+	<h3 class="common_title">商品列表</h3>
+	<div class="common_list_con clearfix" id="order_list">
+		<ul class="goods_list_th clearfix">
+			<li class="col01">商品名称</li>
+			<li class="col02">商品单位</li>
+			<li class="col03">商品价格</li>
+			<li class="col04">数量</li>
+			<li class="col05">小计</li>
+		</ul>
+		<div id="goodsView">
+			<!-- 商品列表视图层 -->
+		</div>
+	</div>
+
+	<!-- 金额结算 -->
+	<h3 class="common_title">总金额结算</h3>
+	<div class="common_list_con clearfix">
+		<div class="settle_con">
+			<div class="total_goods_count">
+				共<em id="total_count"></em>件商品，总金额<b id="total_price"></b>元
+			</div>
+			<div class="transit">
+				运费：<b id="fare">10</b>元
+			</div>
+			<div class="total_pay">
+				实付款：<b id="real_price"></b>元
+			</div>
+		</div>
+	</div>
+	<div class="order_submit clearfix">
+		<a href="javascript:submit_order();" id="order_btn">提交订单</a>
+	</div>
+
+	<div class="popup_con">
+		<div class="popup">
+			<p>订单提交成功！</p>
+		</div>
+		<div class="mask"></div>
+	</div>
+
+	<!-- 版权所有 -->
+	<div class="footer">
+		<div class="foot_link">
+			<a href="#">关于我们</a> <span> | </span> <a href="#">联系我么</a> <span>
+				| </span> <a href="#">招聘人才</a> <span> | </span> <a href="#">友情链接</a>
+		</div>
+		<p>CcpyRight &copy; 2019 衡阳市源辰信息科技有限公司 All Rights Reserverd</p>
+		<p>电话：0734-8355998 湘ICP备16015987号</p>
+	</div>
+</body>
+
+<!-- 商品列表模板 -->
+<script id="goodsModel" type="text/html">
+{{#  layui.each(d.list, function(index, item){ }}
+	<ul class="goods_list_td clearfix">
+		<li class="col01">{{index+1}}</li>
+		<li class="col02"><img src="{{item.pic}}"></li>
+		<li class="col03">{{item.gname}}</li>
+		<li class="col04">{{item.weight}}</li>
+		<li class="col05">{{item.price}}元</li>
+		<li class="col06">{{item.num}}</li>
+		<li class="col07">{{item.price*item.num}}元</li>
+	</ul>
+{{#  }); }}
+</script>
+
+<script type="text/javascript">
+//***引入相关组件*这里先加载组件，以防后面undefined**********************/
+var layer;		//引入layer弹框组件
+layui.use('layer',function(){
+	layer = layui.layer;
+});
+var laytpl;		//引入组件，laytpl，模板引擎
+layui.use('laytpl',function(){
+	laytpl = layui.laytpl;
+});
+//校验是否登录
+var user = checkLogin();
+if(user==null || user==''){
+	location.href = "login.html";
+}
+
+var gInfos = sessionStorage.getItem("currentPayGinfos");
+if(gInfos==null || gInfos==''){
+	alert('操作失败！返回购物车！');
+	location.href = "cart.html";
+}
+
+$(function(){
+	gInfos = JSON.parse(gInfos);
+	console.log(gInfos);
+	//商品列表数据
+	var data = {"list":gInfos};
+	//获得模板视图
+	var getTpl = goodsModel.innerHTML , view = document.getElementById('goodsView');
+	//渲染
+	laytpl(getTpl).render(data,function(html){
+		view.innerHTML = html;
+	});
+	
+	//循环总价
+	var totalPrice = 0;
+	$.each(gInfos,function(index,item){
+		totalPrice += Number(item.price*item.num);
+	});
+	$("#total_count").html(gInfos.length);	//总商品数
+	$("#total_price").html(totalPrice);		//商品总价
+	
+	var fare = Number($("#fare").text());	//运费
+	$("#real_price").html(fare+totalPrice);	//实际付款
+	
+	//***获取配送地址*****************************************************/
+	$.post("addr/getAddrByMno",{mno:user.mno},function(data){
+		if(data.length<=0){
+			return ;
+		}
+		var addrs = ''
+		$.each(data,function(index,item){
+			if(item.flag == 1){
+				addrs += '<dd id="addr_'+item.ano+'" class="selectedAddr" data-ano="'+item.ano+'" onclick="changeSelectAddr(this)"><span>邮寄到  </span>' 
+					+item.province+'&nbsp;'+item.city+'&nbsp;'+item.area+'&nbsp;'+item.addr +'（'+item.name+' 收）'+item.tel+ '</dd>';
+			}else{
+				addrs += '<dd data-ano="'+item.ano+'" onclick="changeSelectAddr(this)"><span>邮寄到  </span>' +item.province+'&nbsp;'+item.city+'&nbsp;'
+				+item.area+'&nbsp;'+item.addr +'（'+item.name+' 收）'+item.tel+ '&emsp;<a href="javascript:defaultAddr('+item.ano+')">设为默认收货地址</a> </dd>';
+			}
+		});
+		$("#addr_list").html(addrs);
+		selectDefaultAddr();
+	},"json");
+})
+
+//***设置默认地址***********************************************************/
+function defaultAddr(ano){
+	if(ano==null || ano<=0){
+		return;
+	}
+	var confirm1 = layer.confirm('确定将该地址设为默认地址', {
+		btn: ['确定', '取消']
+	},function(){
+		$.post("addr/changeDefault",{mno:user.mno,ano:ano},function(data){
+			if(data < 0){
+				layer.msg("设置默认地址失败!");
+			}
+		});
+		layer.close(confirm1);
+	});
+}
+
+//***更改选中的地址*************************************************/
+function changeSelectAddr(obj){
+	console.log("change");
+	$("#addr_list>dd").removeClass("selectedAddr");
+	$(obj).addClass("selectedAddr");
+}
+function selectDefaultAddr(){	//没有选中的，就选择默认的
+	var selects = $("#addr_list>dd");
+	var selecteds = $("#addr_list>dd[class='selectedAddr']");
+	console.log(selects.length);
+	console.log(selecteds.length);
+	if(selecteds.length != 1){		//若没有选上，就默认选择第一个
+		$(selects.eq(0)).addClass("selectedAddr");
+	}
+}
+
+//***收货地址显示******************************************/
+function showAddrDiv() {
+	$("#myform")[0].reset();
+	$("#addr_div").css("display", "block");
+}
+
+function hiddenDiv(){
+	$("#addr_div").css("display", "none");
+}
+
+function addAddr() {
+	var name=$("#addr_name").val() , tel=$("#addr_tel").val() , province=$("#province").val() , 
+			city=$("#city").val() , area=$("#area").val() , addr=$("#addr_addr").val();
+	var params = [name,tel,province,city,area,addr];
+	var msg = ['收件人姓名','收件人联系方式','请选择省份','请选择城市','请选择区县','请输入地址'];
+	if(checkNull(params,msg)){
+		return;
+	}
+	$.post("addr/add",{mno:user.mno,name:name,tel:tel,province:province,city:city,area:area,addr:addr},function(data){
+		data = $.trim(data);	//参数错误-2，添加失败-1。成功返回索引，可以是0
+		if(data >= 0){
+			layer.msg("添加成功！");
+			hiddenDiv();
+			$("#addr_list>dd").removeClass("selectedAddr");		//清除已选
+			var html = '<dd data-ano="'+data+'" class="selectedAddr" onclick="changeSelectAddr(this)"><span>邮寄到  </span>' 
+					+ province +' '+ city +' '+ area +' '+ addr +'（'+name+' 收）'+tel+'</dd>';
+			$("#addr_list").append(html);
+		}else{
+			layer.msg("添加失败！");
+		}
+	});
+}
+
+//***提交订单的方法***************************************************************/
+function submit_order() {
+	$("#order_btn").attr("disable",true);	//禁止重复点击
+	var ano = $("#addr_list>dd[class='selectedAddr']").eq(0).data("ano");
+	if(ano==null || ano<0){
+		layer.msg("请选择收货地址！");
+		return ;
+	}
+	var realPrice = Number($.trim($("#real_price").text()));
+	if(realPrice<=0){
+		return ;
+	}
+	var orderInfo = {'ano':ano , 'price':realPrice}
+	
+	//console.log(gInfos);
+	var orderItem = [];
+	$.each(gInfos,function(index,item){
+		var gInfo = {'gno':item.gno , 'nums':item.num , 'price':item.price};
+		orderItem[index] = gInfo;
+	});
+	//console.log(goodsInfos);
+	$.post("order/add",{"mno":user.mno , "order":JSON.stringify(orderInfo) , "orderItem":JSON.stringify(orderItem)},function(data){
+		data = $.trim(data);
+		if(data > 0){
+			$('.popup_con').fadeIn('fast');		//显示提交成功的框
+			sessionStorage.removeItem("currentPayGinfos");
+			setTimeout(function(){
+				$('.popup_con').fadeOut('fast');	//隐藏提交成功的框
+				location.href = "order.html";
+			},3000);
+		}else{
+			$("#order_btn").removeAttr("disable")	//禁止重复点击
+			layer.alert("订单提交失败，请稍后...");
+		}
+	});
+	
+}
+</script>
+</html>

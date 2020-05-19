@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>天天生鲜-商品详情</title>
+<link rel="short icon" href="images/copylogo.png">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/details.css">
+<script src="js/jquery-3.4.1.min.js"></script>
+<script src="js/check.js"></script>
+<!-- layui -->
+<link rel="stylesheet" href="layui/css/layui.css"  media="all">
+<script src="layui/layui.js" charset="utf-8"></script>
+
+<script src="js/dexie.js"></script>
+<script src="js/details.js"></script>
+</head>
+
+<body>
+	<!-- 头部  -->
+	<div class="header_con">
+		<div class="header">
+			<div class="welcome fl">欢迎来到天天生鲜</div>
+			<div class="fr">
+				<div id="loginInfo" class="login_info fl">
+					欢迎：<em>未登录</em> <span> | </span> <a href="javascript:loginOut()">退出登录</a>
+				</div>
+				<div id="loginBtn" class="login_btn fl">
+					<a href="login.html">登录</a> <span> | </span> <a
+						href="register.html">注册</a>
+				</div>
+				<div class="user_link fl">
+					<span> | </span> <a href="user.html">用户中心</a> <span> | </span> <a
+						href="cart.html">我的购物车</a> <span> | </span> <a href="order.html">我的订单</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 搜素框 -->
+	<div class="search_bar clearfix">
+		<a href="index.html" class="logo fl"><img src="images/logo.png"></a>
+		<div class="search_con fl">
+			<input type="text" class="input_text fl" id="keyWord" placeholder="搜索商品"> 
+			<input type="button" onclick="doSearch();" class="input_btn fr" value="搜索">
+		</div>
+		<div class="guest_cart fr">
+			<a href="cart.html" class="cart_name fl">我的购物车</a>
+			<div class="goods_count fl" id="cart_count">0</div>
+		</div>
+	</div>
+
+	<!-- 全部商品分类 -->
+	<div class="navbar_con">
+		<div class="navbar clearfix">
+			<!-- 动态下拉框 -->
+			<div class="subnav_con fl">
+				<h1 class="fl">全商品分类</h1>
+				<span></span>
+				<ul id="typeList" class="subnav">
+					<!-- 类型列表 -->
+				</ul>
+			</div>
+			<ul class="navlist fl">
+				<li><a href="index.html">首页</a></li>
+				<li class="interval">|</li>
+				<li><a href="">手机生鲜</a></li>
+				<li class="interval">|</li>
+				<li><a href="">抽奖</a></li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- 面包屑导航 -->
+	<div class="breadcrumb" id="breadcrumb">
+		<a href="index.html">全部分类</a> <span>&gt;</span> <a id="currType" href="javascript:void(0)"><!--类型名称--></a>
+		<span>&gt;</span> <a href="javascript:void(0)">商品详情</a>
+	</div>
+
+	<!-- 商品展示 -->
+	<div class="goods_details_con clearfix">
+		<div class="goods_details_pic fl">
+			<div class="layui-carousel" id="goodsPics">
+				<div carousel-item id="goodsPicItem">
+					<!-- 轮播的图片 -->
+				</div>
+			</div>
+		</div>
+		<div class="goods_details_list fr" id="goodsInfoView">
+			<!-- 商品信息展示视图层 -->
+		</div>
+	</div>
+
+	<!-- 新品推荐 -->
+	<div class="main_wrap clearfix">
+		<div class="l_wrap fl clearfix">
+			<div id="newGoodsView" class="new_goods">
+				<!--<h3>新品推荐</h3>
+				<ul id="newGoodsList"> 新品推荐列表,check.js --></ul>
+			</div>
+		</div>
+
+		<div class="r_wrap fr clearfix">
+			<ul class="detail_tab clearfix">
+				<li class="active">商品介绍</li>
+				<li>评论</li>
+				<li>推荐</li>
+			</ul>
+
+			<div class="tab_content">
+				<dl>
+					<dt>商品详情：</dt>
+					<dd id="goodsMsg"> <!-- 商品详情信息 --> </dd>
+				</dl>
+			</div>
+
+		</div>
+	</div>
+
+	<!-- 版权所有 -->
+	<div class="footer">
+		<div class="foot_link">
+			<a href="#">关于我们</a> <span> | </span> <a href="#">联系我们</a> <span>
+				| </span> <a href="#">招聘广告</a> <span> | </span> <a href="#">友情链接</a>
+		</div>
+		<p>CopyRight &copy; 2019 衡阳市源辰信息科技有限公司 All Rights Reserverd</p>
+		<p>电话：0734-8355998 湘ICP备16015987号</p>
+	</div>
+</body>
+
+<script type="text/html" id="goodsInfoModel">
+<h3>{{d.list.gname}}</h3>
+<p>{{d.list.intro}}</p>
+<div class="price_bar">
+<span class="show_price">￥<em>{{d.list.price}}</em>元</span>
+<span class="show_unit">单位：<em>{{d.list.weight}}</em></span>
+</div>
+<div class="goods_num clearfix">
+	<div class="num_name fl">数量：</div>
+	<div class="num_add fl">
+		<input type="text" class="num_show fl" value="1" id="goodsNum">
+		<a href="javascript:count(1);" class="add fr">+</a>
+		<a href="javascript:count(-1);" class="minus fr">-</a>	
+	</div> 
+</div>
+<div class="total">总价：<em>{{d.list.price}}</em>元</div>
+<div class="operate_btn">
+	<a href="javascript:;" class="buy_btn" id="buy_btn">立即购买</a>
+	<a href="javascript:addToCart({{d.list.gno}});" class="add_cart" id="add_cart">加入购物车</a>				
+</div>
+</script>
+
+<script>
+var layer;	//初始化layui组件
+layui.use('layer', function(){
+	layer = layui.layer;
+}); 
+var laytpl;
+layui.use('laytpl',function(){
+	laytpl = layui.laytpl;
+});
+</script>
+</html>

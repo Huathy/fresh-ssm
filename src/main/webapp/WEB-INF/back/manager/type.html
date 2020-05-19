@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<!-- layui -->
+<link rel="stylesheet" href="../../layui/css/layui.css"  media="all">
+<script src="../../layui/layui.js" charset="utf-8"></script>
+</head>
+<body>
+	<div id="forms" class="mt10">
+		<div class="box">
+			<div class="box_border">
+				<div class="box_center">
+					<form id="addForm">
+						类型图片：<input type="file" name="pic" id="picFile" class="input-text lh30" size="40" />&emsp; 
+						类型名称：<input type="text" name="tname" id="tnameInp" class="input-text lh30" size="40" />&emsp; 
+						<input type="button" name="button" class="btn btn82 btn_save2" onclick="addType()" value="添加" />&emsp;
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<table id="table" lay-filter="tbTool"></table>
+</body>
+<script type="text/html" id="toolsBar">
+	<a class="layui-btn layui-btn-xs" lay-event="modify">修改</a>
+	<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script type="text/javascript">
+function addType(){
+	var pic = $("#picFile").val();
+	var tname = $("#tnameInp").val();
+	if((pic=='' || pic==null || pic==undefined) && tname==''){
+		layer.msg('请选择图片，输入类型名称！');
+		return ;
+	}
+	
+	var formData = new FormData($("#addForm")[0]);
+	var loading = layer.load(1, {
+		shade: [0.3,'#fff'] //0.1透明度的白色背景
+	});
+	$.ajax({
+		 type : 'post'
+		,url : '../../type/add'
+		,data : formData
+		,cache : false
+		,processData: false		//在使用FormData时，processData,contentType一定要加上，值为false
+		,contentType: false		//否则报错：TypeError: 'append' called on an object that does not implement interface FormData.
+		,success : function(data,status){
+			data = parseInt(data);
+			layer.close(loading);
+			if(data == -1){
+				layer.msg("请选择要上传的图片，并输入类型名称！");
+			}else if(data > 0){
+				layer.msg("类型添加成功！");
+				renderTable();
+			}else{
+				layer.msg("类型添加失败");
+			}
+		}
+		,error : function(data,status,e){
+			layer.close(loading);
+			layer.alert("类型添加失败：" + e)
+		}
+	});
+}
+
+var mdfObjtemp = null;		//用于暂存修改对象的
+$(function(){
+	renderTable();
+});
+function renderTable(){
+	layui.use('table', function(){
+		var table = layui.table;
+
+		table.render({
+			elem: '#table',
+			url : '../../type/findAllByPage',
+			method : 'post' ,
+			page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+				layout: ['limit', 'count', 'prev', 'page', 'next', 'skip'] //自定义分页布局
+				,curr: 1 //设定初始在第 1 页
+				,groups: 10 //只显示 1 个连续页码
+				,first: true //显示首页
+				,last: true //显示尾页
+			} ,
+		cols: [[
+			{field:'tno',width:'20%', title: '类型编号', sort: true}
+			,{field:'tname', width:'20%', title: '类型名称'}
+			,{field:'pic', width:'20%', title: '类型图片' , templet:function(res){
+				return '<img src="../../'+res.pic+'" />';
+			}}
+			,{field:'status', width:'20%', title: '类型状态' , sort:true , templet:function(res){
+				return res.status==1 ? "正常" : res.status==0 ? "已下架" : "状态码："+res.status;
+			}}
+			,{fixed: 'right', width:'20%', title:'操作',  width:120,toolbar: '#toolsBar'}
+		]]
+		,id : 'typeTable'
+	});
+		
+		//监听行工具事件
+		table.on('tool(tbTool)', function(obj){
+			var data = obj.data;
+			//console.log(obj.data)
+			if(obj.event === 'del'){
+				layer.confirm('删除类型将删除该类型下的所有商品！确认删除？', function(index){
+					layer.close(index);
+					$.post("../../type/delByTno",{tno:data.tno},function(data){
+						data = parseInt($.trim(data));
+						if(data > 0){
+							obj.del();
+							layer.msg("删除成功！",{icon:1});
+						}else{
+							layer.msg("删除失败！请稍后...",{icon:5});
+						}
+					} );
+				});
+			}else if(obj.event === 'modify'){
+				mdfObjtemp = obj;	//把obj对象赋给mdfObjtemp暂存
+				var mdfHtml = '<form id="mdfyForm" class="layui-form layui-form-pane" style="padding:4px;"><input name="tno" type="hidden" value="'+data.tno+'"/>'
+					+ '<div class="layui-form-item"><label class="layui-form-label">类型名称：</label><div class="layui-input-block">'
+					+ '<input type="text" name="tname" value="'+data.tname+'" required  lay-verify="required" placeholder="请输入类型名称" class="layui-input"></div></div>'
+					+ '<div class="layui-form-item"><label class="layui-form-label">类型图片：</label><div class="layui-input-block">'
+					+ '<input type="file" name="pic" required  lay-verify="required" placeholder="请输入类型名称" class="layui-input"></div></div>'
+					+ '<div class="layui-form-item"><label class="layui-form-label">类型状态：</label><div class="layui-input-block">'
+					+ '<input type="text" name="status" value="'+data.status+'" required  lay-verify="required" placeholder="0:用户不可见，1用户可见" class="layui-input"></div></div>'
+					+ '<div class="layui-form-item"><div class="layui-input-block">'
+					+ '<button type="button" class="layui-btn" lay-button lay-filter="formDemo" onclick="javascript:modify()">立即提交</button>&emsp;&emsp;'
+					+ '<button type="button" onclick="javascript:layer.closeAll()" class="layui-btn layui-btn-primary">取消修改</button></div></div></from>';
+				
+				var mdfarme = layer.open({
+					type: 1,
+					skin: 'layui-layer-rim', //加上边框
+					area: ['420px', '280px'], //宽高
+					content: mdfHtml
+				});
+			}
+		});
+	});
+}
+
+function modify(){
+	var obj = mdfObjtemp;		//获取到当前修改的obj对象
+	
+	var tname = $("#mdfyForm input[name='tname']").val();
+	var pic = $("#mdfyForm input[name='pic']").val();
+	var state = $("#mdfyForm input[name='status']").val();
+	
+	var mdfload = layer.load(1, {
+		shade: [0.2,'#fff'] //0.1透明度的白色背景
+	});
+	var formData = new FormData($("#mdfyForm")[0]);
+	$.ajax({
+		 url : '../../type/modifyByTno'
+		,type : 'post'
+		,data : formData
+		,dataType : 'json'	//指定dataType为json
+		,cache : false
+		,processData : false
+		,contentType : false
+		,success : function(data,status){
+			layer.close(mdfload);
+			console.log(data);
+			var code = parseInt($.trim(data.code));
+			console.log(data.code);
+			if(code == -1){
+				layer.msg("修改失败，信息不完整！" ,{icon:2});
+			}else if(code > 0){
+				layer.closeAll();
+				layer.msg("修改成功！" ,{icon:1});
+				obj.update({	//更新该行数据
+					 tname : tname
+					,pic : pic=='' ? obj.data.pic : data.pic
+					,status : state==1 ? "正常" : "已下架"
+				});
+			}else {
+				layer.msg("修改失败！错误："+data ,{icon:2});
+			}
+		}
+		,error : function(data,status,e){
+			layer.close(mdfload);
+			layer.alert("修改失败！错误："+ status +"\n详细：" + e ,{icon:5});
+		}
+	});
+}
+</script>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="shortcut icon" href="../../images/copylogo.png"
+	type="image/x-icon" />
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<link rel="stylesheet" href="../../layui/css/layui.css"  media="all">
+<script src="../../layui/layui.js" charset="utf-8"></script>
+
+</head>
+<body>
+	<table class="layui-hide" id="table" lay-filter="test"></table>
+</body>
+
+<script type="text/html" id="toolsBar">
+  <a class="layui-btn layui-btn-xs" lay-event="mdfPwd">重置密码</a>
+  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script type="text/javascript">
+layui.use('table', function(){
+  var table = layui.table;
+  
+  table.render({
+    elem: '#table',
+	url : '../../menber/findAllByPage',
+	method : 'post' ,
+    page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+      layout: ['limit', 'count', 'prev', 'page', 'next', 'skip'] //自定义分页布局
+      ,curr: 1 //设定初始在第 5 页
+      ,groups: 10 //只显示 1 个连续页码
+      ,first: true //不显示首页
+      ,last: true //不显示尾页
+    } ,
+    cols: [[
+      {field:'mno',width:'10%', title: '编号', sort: true}
+      ,{field:'nickName', width:'12%', title: '用户名'}
+      ,{field:'realName', width:'12%', title: '姓名'}
+      ,{field:'tel', width:'14%', title: '电话'}
+      ,{field:'email', width:'16%', title: '邮箱' }
+      ,{field:'regDate', width:'12%', title: '注册日期', sort: true,templet:function(res){
+    	  return res.regDate.split(' ')[0];
+      }}
+      ,{field:'status', width:'10%', title: '状态码', sort: true}
+      ,{fixed: 'right', width:'14%', title:'操作',  minWidth:120,toolbar: '#toolsBar'}
+    ]],
+    id : 'menberTable'
+  });
+  
+//监听行工具事件
+table.on('tool(test)', function(obj){
+	var data = obj.data;
+	//console.log(obj.data)
+	
+	if(obj.event === 'del'){
+		layer.confirm('确认删除？', function(index){
+			layer.close(index);
+			$.post("../../menber/delByMno",{mno:obj.data.mno},function(data){
+				data = parseInt($.trim(data));
+				if(data > 0){
+					obj.del();
+					layer.msg("删除成功！",{icon:1});
+				}else{
+					layer.msg("删除失败！请稍后...",{icon:5});
+				}
+			});
+		});
+	}else if(obj.event == 'mdfPwd'){
+		layer.confirm('确认重置密码？', function(index){
+			layer.close(index);
+			$.post("../../menber/reSetMno",{mno:obj.data.mno},function(data){
+				data = parseInt($.trim(data));
+				if(data > 0){
+					layer.msg("密码重置成功！",{icon:1});
+				}else{
+					layer.msg("重置密码失败！请稍后...",{icon:5});
+				}
+			});
+		});
+	}
+});
+});
+
+</script>
+</html>

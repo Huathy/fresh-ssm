@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<link rel="stylesheet" href="../../layui/css/layui.css" media="all">
+<script src="../../layui/layui.js" charset="utf-8"></script>
+<script src="../js/echarts.min.js"></script>
+<style type="text/css">
+.layui-progress{
+	width:90%;
+	margin-left: 10%; 
+}
+</style>
+</head>
+<body>
+	<fieldset class="layui-elem-field">
+		<legend>请选择时间范围</legend>
+		<div class="layui-field-box">
+			<!-- 存放内容元素 -->
+			<div class="layui-form">
+				<div class="layui-form-item">
+					<div class="layui-inline">
+						<label class="layui-form-label">日期范围</label>
+						<div class="layui-input-inline">
+							<input type="text" class="layui-input" id="ymd" placeholder=" ~ ">
+						</div>
+					</div>
+					<a class="layui-btn" href="javascript:getReport();">查询</a>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+	
+	<div id="showProgress">
+		未支付订单数量占比：<span id="unPayNum"></span>
+		<div class="layui-progress" lay-filter="unPayNumPro" lay-showPercent="true">
+			<div class="layui-progress-bar" lay-percent="0%"></div>
+		</div><br>
+		已支付订单数量占比：<span id="payNum"></span>
+		<div class="layui-progress" lay-filter="payNumPro" lay-showPercent="true">
+			<div class="layui-progress-bar" lay-percent="0%"></div>
+		</div><br>
+		未支付订单金额占比：<span id="unPayPrice"></span>
+		<div class="layui-progress" lay-filter="unPayPricePro" lay-showPercent="true">
+			<div class="layui-progress-bar layui-bg-blue" lay-percent="0%"></div>
+		</div><br>
+		已支付订单金额占比：<span id="payPrice"></span>
+		<div class="layui-progress" lay-filter="payPricePro" lay-showPercent="true">
+			<div class="layui-progress-bar layui-bg-blue" lay-percent="0%"></div>
+		</div><br>
+	</div>
+	
+	<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<div id="echartsMain" style="width: 600px;height:400px;"></div>
+	
+	<script type="text/javascript">
+		var layer;		//引入leyer弹窗组件
+		layui.use('layer',function(){
+			layer = layui.layer;
+		});
+		//注意进度条依赖 element 模块，否则无法进行正常渲染和功能性操作
+		var element;
+		layui.use('element', function(){
+			element = layui.element;
+		});
+		
+		layui.use('laydate', function() {	//laydate日期组件
+			var laydate = layui.laydate;
+			//日期范围
+			laydate.render({
+				elem : '#ymd',
+				range : '~'		//指定以扭扭符号分割字串，默认-
+			});
+		});
+
+		$(function() {
+			initTime();
+		});
+		function initTime() {	//初始化时间，并查询当日报表
+			var date = new Date();
+
+			var year = date.getFullYear(); //获取当前年
+			var month = date.getMonth() + 1; //获取当前月
+			var date = date.getDate(); //获取当前日
+			if(month < 10){
+				month = "0" + month;
+			}
+			var ymd = year + "-" + month + "-" + date;
+			$("#ymd").val(ymd+" ~ "+ymd);
+			doGetReport(ymd,ymd);
+		}
+		
+		function getReport(){	//点击查询的时间
+			var ymd = $("#ymd").val();
+			var begin = $.trim(ymd.split(" ~ ")[0]);
+			var end = $.trim(ymd.split(" ~ ")[1]);
+			doGetReport(begin,end);
+		}
+		
+		function doGetReport(beginTime,endTime){//需要严格的日期格式 eg：2020-01-01
+			$.post("../../order/report",{beginTime:beginTime,endTime:endTime},function(data){
+				if(data.count < 0){	//小于0，异常
+					layer.msg("数据查询异常！");
+					return;
+				}else if(data.count==0){	//等于0，没有数据
+					layer.msg("未查询到该时段内的销售记录！");
+					return;
+				}
+				
+				var unPayPrice = 0;		//未支付订单的总金额
+				var unPayNum = 0;		//未支付订单数
+				var payPrice = 0;		//已支付订单金额
+				var payNum = 0;			//已支付订单数
+				$.each(data.order,function(index,item){
+					//console.log(item);
+					if(item.status == 1){	//说明该订单未支付
+						unPayPrice += Number(item.price);
+						unPayNum ++;
+					}else{
+						payPrice += Number(item.price);
+						payNum ++;
+					}
+				});
+				var totalPrice = unPayPrice + payPrice;
+				var totalNum = unPayNum + payNum;
+				
+				//console.log(unPayPrice/totalPrice*100);
+				//设置进度条
+				element.progress('unPayNumPro', unPayNum/totalNum*100+'%');
+				element.progress('payNumPro', payNum/totalNum*100+'%');
+				element.progress('unPayPricePro', unPayPrice/totalPrice*100+'%');
+				element.progress('payPricePro', payPrice/totalPrice*100+'%');
+				
+				$("#unPayNum").html(unPayNum + " / " + totalNum);
+				$("#payNum").html(payNum + " / " + totalNum);
+				$("#unPayPrice").html(unPayPrice + " / " + totalPrice);
+				$("#payPrice").html(payPrice + " / " + totalPrice);
+				
+//----------ECharts数据可视化---------------------------------------------------------------------------/
+				//console.log(data.oItem);
+				var gnameList = ['商品名称'];
+				var priceList = ['商品总订价'];
+				var numsList = ['商品总订单量'];
+				$.each(data.oItem,function(index,item){
+					if( gnameList.indexOf(item.gname) == -1 ){	//说明数组中没有该值
+						gnameList.push(item.gname);
+						priceList.push(item.price);
+						numsList.push(item.nums);
+					}else{
+						var i = gnameList.indexOf(item.gname);
+						priceList[i] += item.price*item.nums;
+						numsList[i] += item.nums;
+					}
+				});
+				
+				console.log(gnameList);
+				console.log(priceList);
+				console.log(numsList);
+				
+				// 基于准备好的dom，初始化echarts实例
+				var myChart = echarts.init(document.getElementById('echartsMain'));
+				// 指定图表的配置项和数据
+				/*var option = {
+					title: {
+						text: '已出售商品占比'
+					},
+					tooltip: {},
+					legend: {
+						data:['销量']
+					},
+					xAxis: {
+						data: gnameList
+					},
+					yAxis: {},
+					series: [{
+						name: '销量',
+						type: 'bar',
+						data: numsList
+					}]
+				};*/
+				
+				var option = {
+					legend: {},
+					tooltip: {},
+					dataset: {
+						source: [
+							gnameList ,
+							priceList ,
+							numsList 
+						]
+					},
+					xAxis: {type: 'category'},
+					yAxis: {},
+					// Declare several bar series, each will be mapped
+					// to a column of dataset.source by default.
+					series: [
+						{type: 'bar'},
+						{type: 'bar'},
+						{type: 'bar'},
+					]
+					};
+		 
+				// 使用刚指定的配置项和数据显示图表。
+				myChart.setOption(option);
+			},'json');
+		}
+	</script>
+</body>
+</html>

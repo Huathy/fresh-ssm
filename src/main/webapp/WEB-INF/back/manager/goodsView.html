@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="shortcut icon" href="../../images/copylogo.png" type="image/x-icon" />
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script type="text/javascript" src="../js/jquery.base64.js"></script>
+<!-- layui -->
+<link rel="stylesheet" href="../../layui/css/layui.css" media="all">
+<script src="../../layui/layui.js" charset="utf-8"></script>
+<style type="text/css">
+.layui-table-cell{
+	height: 40px !important;
+	white-space:normal;
+}
+.layui-table-cell img{
+	height:110%;
+	white-space:normal;
+}
+</style>
+</head>
+<body>
+	<table class="layui-hide" id="table" lay-filter="test"></table>
+</body>
+
+<script type="text/html" id="toolsBar">
+  <a class="layui-btn layui-btn-xs" lay-event="edit">修改</a>
+  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script type="text/javascript">
+var mdfObjtemp = null;		//用于暂存修改对象的，以供子页面使用
+var typesTemp = '';			//用于暂存类型信息，以供子页面获取
+$.get("../../type/getTidName",function(data){
+	typesTemp = data;		//将类型数据赋给子页面
+},"json");
+
+layui.use('table', function() {
+	var table = layui.table;
+
+	table.render({
+		elem : '#table',
+		url : '../../goods/findAllByPage',
+		method : 'post',
+		page : { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+			layout : [ 'limit', 'count', 'prev', 'page', 'next', 'skip' ] //自定义分页布局
+			,curr : 1 //设定初始在第 5 页
+			,page : true
+			,groups : 5 //只显示 1 个连续页码
+			,first : true //不显示首页
+			,last : true
+		//不显示尾页
+		},
+		cols : [ [ 
+			{ field : 'gno', width : '6%', title : '编号', sort : true }
+			, { field : 'gname', width : '10%', title : '商品名称', sort : true }
+			, { field : 'tno', width : '8%', title : '类型', sort : true }
+			, { field : 'price', width : '6%', title : '单价', sort : true }
+			, { field : 'weight', width : '6%', title : '净重' }
+			, { field : 'balance', width : '6%', title : '库存', sort : true }
+			, { field : 'unit', width : '6%', title : '单位'}
+			, { field : 'qperied', width : '8%', title : '保质期' }
+			, { field : 'pics', width : '8%', title : '图片', templet : function(res){
+				var pics = res.pics.split("|");	//截去分隔符将其转为数组
+				var picInfo = '<div id="pics_'+ res.gno +'" style="height:100%;weidth:100%">';
+				for(var i=0; i<pics.length; i++){
+					picInfo += '<img  src="../../'+pics[i]+'" />'
+				}
+				picInfo += "</div>";
+				return picInfo;
+			} }
+			, { field : 'intro', width : '12%', title : '简介' }
+			, { field : 'descr', width : '14%', title : '描述' }
+			, { fixed : 'right', width : '8%', title : '操作', width : 120, toolbar : '#toolsBar' }
+		] ],
+		id : 'menberTable'
+	});
+
+	//监听行工具事件
+	table.on('tool(test)', function(obj) {
+		var data = obj.data;
+
+		if (obj.event === 'del') {
+			layer.confirm('确认删除？', function(index) {
+				layer.close(index);
+				$.post("../../goods/delByGno", {
+					gno : obj.data.gno
+				}, function(data) {
+					data = parseInt($.trim(data));
+					if (data > 0) {
+						obj.del();
+						layer.msg("删除成功！", {
+							icon : 1
+						});
+					} else {
+						layer.msg("删除失败！请稍后...", {
+							icon : 5
+						});
+					}
+				});
+			});
+		}else if(obj.event == 'edit'){
+			mdfObjtemp = obj;	//把obj对象赋给mdfObjtemp暂存
+			
+			layer.open({
+				type: 2,
+				title: '修改商品信息',
+				shadeClose: true,
+				shade: false,
+				maxmin: true, //开启最大化最小化按钮
+				area: ['94%', '94%'],
+				content: 'goodsModify.html'
+			});
+			
+		}
+	});
+});
+
+//修改成功，回调更新数据
+function changeData(obj){
+	mdfObjtemp.update({	//更新该行数据
+		 gname : obj.gname
+		,tno : obj.tno
+		,price : obj.price
+		,weight : obj.weight
+		,balance : obj.balance
+		,unit : obj.unit
+		,qperied : obj.qperied
+		,intro : obj.intro
+		,descr : obj.descr
+	})
+	console.log(obj.pics);
+	//pics_
+	//图片进行另外的判断后更新
+	if(obj.pics.length>0){	//因为数据是string格式xxx.jpg|xx.png
+		var pics = obj.pics.split("|");	//截去分隔符将其转为数组
+		var picInfo = '';
+		for(var i=0; i<pics.length; i++){
+			picInfo += '<img  src="../../'+ $.trim(pics[i]) +'" />'
+		}
+		$("#pics_"+obj.gno).html(picInfo);
+	}
+}
+</script>
+</html>

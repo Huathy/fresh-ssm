@@ -1,0 +1,200 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>天天生鲜-用户中心</title>
+<link rel="shortcut icon" href="images/copylogo.png">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/user.css">
+<!--  注意引入顺序 -->
+<script src="js/jquery-3.4.1.min.js"></script>
+<script src="js/check.js"></script>
+<script src="js/paramsUtil.js"></script>
+<script src="js/areas.js"></script>
+<!-- layui -->
+<link rel="stylesheet" href="layui/css/layui.css" media="all">
+<script src="layui/layui.js" charset="utf-8"></script>
+
+<script src="js/dexie.js"></script>
+<script src="js/user.js"></script>
+</head>
+
+<body>
+	<!-- 头部  -->
+	<div class="header_con">
+		<div class="header">
+			<div class="welcome fl">欢迎来到天天生鲜</div>
+			<div class="fr">
+				<div id="loginInfo" class="login_info fl">
+					欢迎：<em>未登录</em> <span> | </span> <a href="javascript:loginOut()">退出登录</a>
+				</div>
+				<div id="loginBtn" class="login_btn fl">
+					<a href="login.html">登录</a> <span> | </span> <a
+						href="register.html">注册</a>
+				</div>
+				<div class="user_link fl">
+					<span> | </span> <a href="user.html">用户中心</a> <span> | </span> <a
+						href="cart.html">我的购物车</a> <span> | </span> <a href="order.html">我的订单</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 搜素框 -->
+	<div class="search_bar clearfix">
+		<a href="index.html" class="logo fl"><img src="images/logo.png"></a>
+		<div class="search_con fl">
+			<input type="text" placeholder="搜素商品" name="" class="input_text fl">
+			<input type="button" value="搜索" class="input_btn fr">
+		</div>
+		<div class="guest_cart fr">
+			<a href="cart.html" class="cart_name fl">我的购物车</a>
+			<div class="goods_count fl" id="cart_count">0</div>
+		</div>
+	</div>
+	<!-- 用户中心界面 -->
+	<div class="main_con clearfix">
+
+		<!-- 左侧用户菜单栏 -->
+		<div class="left_menu_con fl clearfix">
+			<h3>用户中心</h3>
+			<ul id="navBar" >
+				<li><a onclick="changeSelect(this)" href="javascript:showPersonInfo()" class="active">· 个人信息</a></li>
+				<li><a onclick="changeSelect(this)" href="javascript:showAddrInfo();" >· 收货地址</a></li>
+				<li><a onclick="changeSelect(this)" href="javascript:showRecentView();" >· 最近浏览</a></li>
+				<li><a onclick="changeSelect(this)" href="order.html">· 全部订单</a></li>
+			</ul>
+		</div>
+
+		<!-- 右侧信息展示 -->
+		<div class="right_content fr clearfix">
+			<!-- 基本信息  -->
+			<div class="info_con clearfix"  id="showView">
+				<!-- 信息视图 -->
+				
+			</div>
+		</div>
+	</div>
+	
+	<!-- 版权所有 -->
+	<div class="footer">
+		<div class="foot_link">
+			<a href="#">关于我们</a> <span> | </span> <a href="#">联系我么</a> <span>
+				| </span> <a href="#">招聘人才</a> <span> | </span> <a href="#">友情链接</a>
+		</div>
+		<p>CcpyRight &copy; 2019 衡阳市源辰信息科技有限公司 All Rights Reserverd</p>
+		<p>电话：0734-8355998 湘ICP备16015987号</p>
+	</div>
+
+</body>
+
+<!-- 个人信息的视图模板 -->
+<script id="personInfoModel" type="text/html">
+<h3 class="common_title2">基本信息
+<a onclick="modifyPersonInfo()" class="layui-btn layui-btn-normal" style="float:right">修改个人信息</a></h3>
+<ul class="user_info_list">
+	<li>用户编号：<span id="mno">{{d.list.mno}}</span> </li>
+	<li>用户昵称：<span id="nickName">{{d.list.nickName}}</span> </li>
+	<li>真实姓名：<span id="realName">{{d.list.realName}}</span> </li>
+	<li>联系方式：<span id="tel">{{d.list.tel}}</span></li>
+	<li>电子邮箱：<span id="email">{{d.list.email}}</span></li>
+	<li>注册时间：<span id="regDate">{{d.list.regDate}}</span></li>
+	<li>用户头像：<span id="pic">暂未开通超级会员</span></li>
+</ul>
+</script>
+
+<!-- 最近浏览视图模板 -->
+<script id="recentBrowseModel" type="text/html">
+<h3 class="common_title2">最近浏览</h3>
+<div class="has_view_list">
+<ul class="goods_type_list clearfix">
+{{#  $.each(d.list,function(index,item){  }}
+{{#  console.log(item);  }}
+<li><a href="details.html?tp={{item.tno}}&gno={{item.gno}}"><img src="{{item.pic}}"></a>
+<h4><a href="details.html?tp={{item.tno}}&gno={{item.gno}}">{{item.gname}}</a></h4>
+	<div class="operate">
+		<span class="prize">￥{{item.price}}</span> <span class="unit">{{item.price}}/{{item.weight}}</span>
+		<a href="javascript:addToCart({{item.gno}},1);" class="add_goods" title="加入购物车"></a>
+	</div>
+</li>
+{{#  });  }}
+</ul>
+</div>
+</script>
+
+<!-- 修改默认地址视图模板 -->
+<script type="text/html" id="modifyAddrModel">
+<form id="modifyAddrForm" class="layui-form layui-form-pane" style="margin:1%;">
+	<div class="layui-form-item">
+		<label class="layui-form-label">收件人姓名</label>
+		<div class="layui-input-block">
+			<input type="text" name="name" id="name" value="{{d.list.name}}" required  lay-verify="required" class="layui-input">
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">联系电话</label>
+		<div class="layui-input-block">
+			<input type="text" name="tel" id="tel" value="{{d.list.tel}}" required  lay-verify="required" class="layui-input">
+		</div>
+	</div>
+	<div class="layui-form-item" pane>
+		<label class="layui-form-label">请选择地址</label>
+		<div class="layui-input-block" >
+			<select id="province" class="layui-input layui-unselect" onclick="showProvince()" onchange="showCity()"  lay-ignore>
+				<option value="">--请选择省份--</option>
+			</select>
+			<select id="city"  class="layui-input layui-unselect"  onchange="showArea()" lay-ignore>
+				<option value="">--请选择城市--</option>
+			</select> 
+			<select id="area"  class="layui-input layui-unselect"  lay-ignore>
+				<option value="">--请选择地区--</option>
+			</select>
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">详细地址</label>
+		<div class="layui-input-block">
+			<input type="text" name="addr" id="addr" value="{{d.list.addr}}" required  lay-verify="required" class="layui-input">
+		</div>
+	</div>
+</form>
+</script>
+
+<!-- 修改默认个人信息的视图模板 -->
+<script type="text/html" id="modifyPersonInfoModel">
+<form id="modifyAddrForm" class="layui-form layui-form-pane" style="margin:1%;">
+	<div class="layui-form-item">
+		<label class="layui-form-label">昵称</label>
+		<div class="layui-input-block">
+			<input type="text" name="nickName" id="mdfNickName" value="{{d.list.nickName}}" required  lay-verify="required" class="layui-input">
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">真实姓名</label>
+		<div class="layui-input-block">
+			<input type="text" name="realName" id="mdfRealName" value="{{d.list.realName}}" required  lay-verify="required" class="layui-input">
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">联系电话</label>
+		<div class="layui-input-block">
+			<input type="text" name="tel" id="mdfTel" value="{{d.list.tel}}" required  lay-verify="required" class="layui-input">
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">邮箱地址</label>
+		<div class="layui-input-block">
+			<input type="text" name="email" id="mdfEmail" value="{{d.list.email}}" required  lay-verify="required" class="layui-input">
+		</div>
+	</div>
+</form>
+</script>
+
+<script type="text/html" id="barDemo">
+	<a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+	<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+</html>
+

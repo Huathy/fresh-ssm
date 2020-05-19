@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/main.css">
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script type="text/javascript" src="../js/showpic.js"></script>
+<script type="text/javascript" src="../js/ajaxfileupload.js"></script>
+<script src="../ckeditor/ckeditor.js"></script>
+<!-- layer -->
+<script src="../../layer/layer.js" charset="utf-8"></script>
+</head>
+<body>
+<div id="forms" class="mt10">
+	<div class="box">
+		<div class="box_border">
+			<div class="box_top">
+				<b class="pl15">添加商品信息</b>
+			</div>
+			<div class="box_center">
+				<form action="" class="jqtransform" id="addGoodsForm">
+					<table class="form_table pt15 pb15" width="100%" border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td class="td_right">商品类型：</td>
+							<td>
+								<select class="select" name="tid" id="goodsType">
+								</select>
+							</td>
+							<td class="td_right">商品名称：</td>
+							<td>
+								<input type="text" id="gname" name="title" class="input-text lh30" size="40" required placeholder="请输入商品名称">
+							</td>
+							<td class="td_right">商品单价：</td>
+							<td>
+								<input type="number" id="price" name="price" class="input-text lh30" size="40"  min="0" required placeholder="单价"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="td_right">商品库存：</td>
+							<td>
+								<input type="number" id="balance" name="balance" class="input-text lh30" size="40" min="1" required placeholder="库存"/>
+							</td>
+							<td class="td_right">商品单位：</td>
+							<td>
+								<input type="text" id="unit" name="unit" list="unitList" class="input-text lh30" required size="40" placeholder="请选择或输入单位"/>
+								<datalist id="unitList">
+									<option>个</option>
+									<option>斤</option>
+									<option>公斤</option>
+									<option>两</option>
+								</datalist>
+							</td>
+							<td class="td_right">保质期：</td>
+							<td>
+								<input type="text" id="qperied" name="qperied" class="input-text lh30" size="40" required placeholder="保质期"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="td_right">商品净重：</td>
+							<td>
+								<input type="text" id="weight" name="weight" class="input-text lh30" size="40"  min="0" required placeholder="净重" >
+							</td>
+							<td class="td_right">商品图片：</td>
+							<td>
+								<input type="file" id="pic" name="pic" class="input-text lh30" size="40" multiple="multiple" required onchange="setImagePreviews(this,'showPics')">
+							</td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>&nbsp;</td>
+							<td colspan="5" align="center">
+								<div id="showPics">
+								
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td class="td_right">商品简介：</td>
+							<td colspan="5">
+								 <textarea name="intro" id="intro" rows="3" cols="100" required maxlength="130" placeholder="请输入商品简介"></textarea>
+							</td>
+						</tr>
+						<tr>
+							<td class="td_right">商品描述：</td>
+							<td colspan="5">
+								 <textarea name="editor1" id="editor1" rows="10" cols="80" required placeholder="请输入商品描述信息"></textarea>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="4" align="center">
+								<input type="button" name="button" class="btn btn82 btn_save2" onclick="addGoodsInfo()" value="添加">
+								<input type="button" onclick="resetForm()" name="button" class="btn btn82 btn_res" value="重置">
+							</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+$(function(){
+	//*****获取类型并渲染*********************************************************/
+	$.get("../../type/getTidName",function(data){
+		var str = '<option id="0" value="-1">请选择商品类型</option>';
+		$.each(data,function(index,item){
+			str += '<option id="'+item.tno+'" value="'+item.tno+'">'+item.tname+'</option>';
+		});
+		$("#goodsType").html(str);
+	},"json");
+});
+
+
+//渲染富文本编辑器
+CKEDITOR.replace( 'editor1' );
+
+//*****执行商品添加方法***********************************************************************************************/
+function addGoodsInfo() {
+	var tno = $.trim($("#goodsType").val());	
+	var gname = $.trim($("#gname").val());		
+	var price = $.trim($("#price").val());		
+	var balance = $.trim($("#balance").val());	
+	var unit = $.trim($("#unit").val());		
+	var qperied = $.trim($("#qperied").val());	
+	var weight = $.trim($("#weight").val());	
+	var intro = $.trim($("#intro").val());		
+	var descr = CKEDITOR.instances.editor1.getData();	//获取描述信息
+	
+	//**判空操作及提示****/
+	balance = parseInt(balance);
+	if(isNaN(balance) || balance<=0){
+		layer.msg("请重新输入库存信息");
+	}
+	var params = [tno,gname,price,balance,unit,qperied,weight,intro,descr];
+	var msg = ['商品类型','商品名称','商品单价','商品库存','商品单位','保质期','商品净重','商品简介','商品描述'];
+	for(var i=0;i<params.length;i++){
+		console.log(i+"-"+params[i]);
+		if(params[i]==null || params[i]==''){
+			layer.msg('请完善 '+msg[i]+' 信息！',{icon:2});
+			return;
+		}
+	}
+	if(tno <= 0){
+		layer.msg("请选择商品类型");
+		return;
+	}
+	var pic = $("#pic").val();
+	if(pic=='' || pic==null){
+		layer.msg("请选择商品图片!",{icon:2});
+		return;
+	}
+	
+	$.ajaxFileUpload({
+		url:'../../goods/addGoods',
+		secureuri: false,
+		fileElementId:"pic",
+		dataType:"json",
+		data:{tno:tno, gname:gname,price:price,balance:balance,unit:unit,qperied:qperied,weight:weight,intro:intro,descr:descr},
+		success:function(data, stuts) {
+			data = parseInt($.trim(data));
+			if (data > 0) {
+				resetForm();	//表单重置
+				layer.msg("商品信息添加成功...");
+			} else if (data == -1) {
+				layer.msg("请选择要上传的图片！");
+			} else if (data == -2) {
+				layer.msg("请完善商品信息！");
+			}else {
+				layer.msg("商品信息添加失败...");
+			}
+		},
+		error:function(data, status, e) {
+			alert("商品信息添加失败，请稍后重试...\n" + e);
+		}
+	});
+}
+
+function resetForm(){
+	$("#addGoodsForm")[0].reset();
+	$("#showPics").html("");
+	CKEDITOR.instances.editor1.setData("");
+}
+</script>
+</body>
+</html>

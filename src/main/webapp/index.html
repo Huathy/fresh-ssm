@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>天天生鲜-首页</title>
+<link rel="short icon" href="images/copylogo.png">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/index.css">
+<link rel="stylesheet" href="css/foot.css">
+<!--  注意引入顺序 -->
+<script src="js/jquery-3.4.1.min.js"></script>
+<script src="js/jquery-ui.min.js"></script>
+<script src="js/slide.js"></script>
+<script src="js/check.js"></script>
+</head>
+
+<body>
+	<!-- 头部  -->
+	<div class="header_con">
+		<div class="header">
+			<div class="welcome fl">欢迎来到天天生鲜</div>
+			<div class="fr">
+				<div id="loginInfo" class="login_info fl">
+					欢迎：<em>未登录</em> <span> | </span> <a href="javascript:loginOut()">退出登录</a>
+				</div>
+				<div id="loginBtn" class="login_btn fl">
+					<a href="login.html">登录</a> <span> | </span> <a href="register.html">注册</a>
+				</div>
+				<div class="user_link fl">
+					<span> | </span> <a href="user.html">用户中心</a> <span> | </span> <a
+						href="cart.html">我的购物车</a> <span> | </span> <a href="order.html">我的订单</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 搜素框 -->
+	<div class="search_bar clearfix">
+		<a href="index.html" class="logo fl"><img src="images/logo.png"></a>
+		<div class="search_con fl">
+			<input type="text" class="input_text fl" id="keyWord" placeholder="搜索商品"> 
+			<input type="button" onclick="doSearch();" class="input_btn fr" value="搜索">
+		</div>
+		<div class="guest_cart fr">
+			<a href="cart.html" class="cart_name fl">我的购物车</a>
+			<div class="goods_count fl" id="cart_count">0</div>
+		</div>
+	</div>
+
+	<!-- 商品分类 -->
+	<div class="navbar_con">
+		<div class="navbar">
+			<h1 class="fl">全商品分类</h1>
+			<ul class="navlist fl">
+				<li><a href="">首页</a></li>
+				<li class="interval">|</li>
+				<li><a href="">手机生鲜</a></li>
+				<li class="interval">|</li>
+				<li><a href="">抽奖</a></li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- 导航栏 -->
+	<div class="center_con clearfix">
+		<div class="subnav fl">	<!-- 使得支持滑动并隐藏滑动条 -->
+			<ul id="typeInfo" style="width: 102%;height: 100%;overflow-x: hidden;overflow-y: auto;padding-right:30px;">
+			</ul>
+		</div>
+		<div class="slide fl">
+			<ul class="slide_pics">
+				<li><a href="" class=""><img src="images/slide.jpg"
+						alt="幻灯片"></a></li>
+				<li><a href="" class=""><img src="images/slide02.jpg"
+						alt="幻灯片"></a></li>
+				<li><a href="" class=""><img src="images/slide03.jpg"
+						alt="幻灯片"></a></li>
+				<li><a href="" class=""><img src="images/slide04.jpg"
+						alt="幻灯片"></a></li>
+			</ul>
+			<div class="prev"></div>
+			<div class="next"></div>
+			<ul class="points"></ul>
+		</div>
+		<div class="adv fl">
+			<a href=""><img src="images/adv01.jpg" alt="清凉一夏"></a> <a
+				href=""><img src="images/adv02.jpg" alt="盛夏尝鲜"></a>
+		</div>
+	</div>
+	
+	<div id="goodsInfoList">
+		<!-- 商品展示 -->
+	</div>
+	
+	<!-- 版权所有 -->
+	<div class="footer">
+		<div class="foot_link">
+			<a href="#">关于我们</a> <span> | </span> <a href="#">联系我们</a> <span>
+				| </span> <a href="#">招聘广告</a> <span> | </span> <a href="#">友情链接</a>
+		</div>
+		<p>CopyRight &copy; 2019 衡阳市源辰信息科技有限公司 All Rights Reserverd</p>
+		<p>电话：0734-8355998 湘ICP备16015987号-1</p>
+	</div>
+	
+</body>
+<script>
+checkLogin();
+
+var tnos = [];	//定义类型编号临时变量，以供后面使用
+var types;		//定义类型临时变量，以供后边使用
+
+$(function(){
+	//强制将Ajax设置为同步请求
+	$.ajaxSettings.async=false;
+	$.get("type/getAll",function(data){	//<li><a href="#model01" class="fruit">新鲜水果</a></li>
+		types = data;
+		sessionStorage.setItem("types",JSON.stringify(data));	//将对象转为字符串保存在session中，以供其他页面获取
+		var typeInfo = '';
+		$.each(data,function(index,item){
+			typeInfo += '<li><img style="height:80%;position:relative;margin-left:-110px;margin-top:5px;" src="' + item.pic + '"/>';
+			typeInfo += '<a style="float:left;z-index:2;" href="#model'+item.tno+'">' + item.tname + '</a></li>';
+			tnos[index] = item.tno;
+		});
+		$("#typeInfo").html(typeInfo);
+	},'json');
+	//为了不影响后面的请求当请求完毕后,在将Ajax设为异步请求
+	$.ajaxSettings.async=true;
+	
+	$.get("goods/getTidGoods",function(data){
+		var goodsInfo = '';		//定义一下商品列表
+		$.each(data,function(index,item){	//循环类型
+			var  tno = $.trim(item.tno);
+			if( tnos.indexOf( tno ) ){
+				var gInfos = data[index].gInfo.split(":");	//将商品信息从字符串转为数组类型
+				var type = types[index];
+				//处理商分类显示的子商品标题链接，与商品信息
+				var gTitle = '';
+				var gInfo = '<ul class="goods_list fl">';
+				$.each(gInfos,function(idx,itm){	//后台数据格式："id||name||price||[../xxx.jpg,../xxx.png]"
+					var gf = itm.split("||");
+					if(gf.length>=3){
+						var pic = gf[3].split("|")[0];
+					}
+					gTitle += '<a href="details.html?tp='+tno+'&gno='+gf[0]+'">'+gf[1]+'</a>';
+					gInfo += '<li><h4><a href="details.html?tp='+tno+'&gno='+gf[0]+'">'+gf[1];
+					gInfo += '</a></h4><a href="details.html?tp='+tno+'&gno='+gf[0]+'">'
+					gInfo += '<img src="'+pic+'"></a><div class="prize">￥ '+gf[2]+'</div></li>';
+				})
+				gInfo += '</ul>';
+				
+				goodsInfo += '<div class="list_model"><div class="list_title clearfix"><h3 class="fl" id="model'+tno+'">'+type.tname+'</h3>'
+				goodsInfo += '<div class="subtitle fl"><span>|</span>' + gTitle;
+				goodsInfo += '</div><a href="goods.html?tp='+tno+'&pn=1" class="goods_more fr" id="fruit_more">查看更多</a></div>';
+				goodsInfo += '<div class="goods_con clearfix"><div class="goods_banner fl"><img src="'+type.pic+'"></div>';
+				goodsInfo += gInfo + '</div></div>';
+			}
+		});
+		$("#goodsInfoList").append(goodsInfo);
+	},"json");
+})
+
+</script>
+</html>

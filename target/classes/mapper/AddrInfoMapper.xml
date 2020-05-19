@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hx.fresh.mapper.IAddrInfoMapper">
+	<insert id="add" parameterType="AddrInfo">	<!-- 在插入时，返回索引 -->
+		<selectKey resultType="int" keyProperty="ano" order="AFTER">
+			select @@IDENTITY as id
+		</selectKey>
+		INSERT INTO addrinfo VALUES(0,#{mno},#{name},#{tel},#{province},#{city},#{area},#{addr},0,1)
+	</insert>
+	
+	<select id="getAddrByMno" parameterType="int" resultType="AddrInfo">	<!-- 将地址用空格分割拼接查出，存放到addr中 -->
+		SELECT ano,`name`,tel,province,city,area,addr,flag FROM addrinfo WHERE mno=#{_parameter} AND `status`=1
+		<!-- SELECT ano,`name`,tel,CONCAT_WS(' ',province,city,area,addr) addr,flag FROM addrinfo WHERE mno=#{_parameter} AND `status`=1 -->
+	</select>
+	
+	<update id="changeDefault" parameterType="Integer">
+		UPDATE addrinfo a1,addrinfo a2 SET a1.flag= 1,a2.flag = 0 WHERE a1.ano=#{ano} AND a2.ano NOT IN (#{ano}) AND a2.mno=#{mno}
+	</update>
+	
+	<update id="modifyAddrByAno" parameterType="AddrInfo">
+		update addrinfo set name=#{name},tel=#{tel},province=#{province},city=#{city},area=#{area},addr=#{addr} where ano=#{ano}
+	</update>
+	
+	<delete id="delByAno" parameterType="int">
+		delete from addrinfo where ano=#{_parameter}
+	</delete>
+</mapper>
